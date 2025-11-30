@@ -1,0 +1,147 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 學習地圖</title>
+<style>
+    body {
+        font-family: "Noto Sans TC", sans-serif;
+        background: #faf6ef;
+        padding: 40px;
+        text-align: center;
+    }
+    h1 {
+        margin-bottom: 20px;
+    }
+    input, button {
+        padding: 10px;
+        font-size: 16px;
+    }
+    #intro {
+        margin-top: 30px;
+        text-align: left;
+        background: #fff4e0;
+        padding: 20px;
+        border-radius: 8px;
+    }
+    .group {
+        margin-top: 30px;
+        position: relative;
+    }
+    .node {
+        display: inline-block;
+        padding: 12px 22px;
+        border-radius: 40px;
+        font-size: 18px;
+        color: white;
+        margin: 20px;
+        cursor: pointer;
+        position: relative;
+    }
+    .basic { background: #f2a65a; }
+    .mid { background: #6cb6f0; }
+    .adv { background: #8ccfa0; }
+
+    .arrow {
+        width: 2px;
+        height: 50px;
+        background: #555;
+        margin: 0 auto;
+        position: relative;
+    }
+    .arrow::after {
+        content: '';
+        position: absolute;
+        bottom: -6px;
+        left: -4px;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 6px solid #555;
+    }
+
+    #details {
+        margin-top: 30px;
+        text-align: left;
+        background: #e0f7ff;
+        padding: 20px;
+        border-radius: 8px;
+        white-space: pre-wrap;
+    }
+</style>
+</head>
+<body>
+
+<h1>AI 學習地圖（Learning Path）</h1>
+
+<div>
+    <input type="text" id="topic-input" placeholder="輸入學習主題，例如 R">
+    <button id="generate">生成學習地圖</button>
+</div>
+
+<!-- 主題介紹 -->
+<div id="intro">這裡會顯示主題介紹...</div>
+
+<!-- 學習地圖 -->
+<div id="map-container"></div>
+
+<!-- 節點詳細資訊 -->
+<div id="details">點擊節點查看詳細資訊...</div>
+
+<script>
+const API_URL = "https://empty-smoke-ce66.111701002.workers.dev"; // 你的 Worker URL
+
+// 節點顏色對應
+const levelClass = {
+    "初階": "basic",
+    "中階": "mid",
+    "進階": "adv"
+};
+
+// 按下生成按鈕
+document.getElementById("generate").addEventListener("click", async () => {
+    const topic = document.getElementById("topic-input").value.trim();
+    if (!topic) return alert("請輸入學習主題");
+
+    // 呼叫後端 Worker API
+    const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: topic })
+    });
+    const data = await response.json();
+
+    // 顯示主題介紹
+    document.getElementById("intro").innerText = data.intro;
+
+    // 生成學習地圖節點
+    const mapContainer = document.getElementById("map-container");
+    mapContainer.innerHTML = "";
+    data.map.forEach((node, index) => {
+        const div = document.createElement("div");
+        div.className = "node " + levelClass[node.level];
+        div.innerText = node.title;
+        div.addEventListener("click", async () => {
+            const nodeResp = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ topic: topic, node: node.title })
+            });
+            const nodeData = await nodeResp.json();
+            document.getElementById("details").innerText = nodeData.details;
+        });
+        mapContainer.appendChild(div);
+
+        if (index < data.map.length - 1) {
+            const arrow = document.createElement("div");
+            arrow.className = "arrow";
+            mapContainer.appendChild(arrow);
+        }
+    });
+});
+</script>
+
+</body>
+</html>
+
