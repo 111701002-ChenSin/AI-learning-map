@@ -38,10 +38,10 @@
 <div id="details">點擊節點查看詳細資訊...</div>
 
 <script>
-const API_URL = "https://empty-smoke-ce66.111701002.workers.dev"; // 你的 Worker URL
-
+const API_URL = "https://empty-smoke-ce66.111701002.workers.dev"; // 改成你的 Worker URL
 const levelClass = { "初階": "basic", "中階": "mid", "進階": "adv" };
 
+// 按下生成按鈕
 document.getElementById("generate").addEventListener("click", async () => {
     const topic = document.getElementById("topic-input").value.trim();
     if (!topic) return alert("請輸入學習主題");
@@ -75,18 +75,9 @@ document.getElementById("generate").addEventListener("click", async () => {
             div.innerText = node.title;
 
             // 點擊節點顯示詳細資訊
-            div.addEventListener("click", async () => {
-                try {
-                    const nodeResp = await fetch(API_URL, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ topic: topic, node: node.title })
-                    });
-                    const nodeData = await nodeResp.json();
-                    document.getElementById("details").innerText = nodeData.details || "沒有詳細資訊";
-                } catch (err) {
-                    document.getElementById("details").innerText = "節點資料取得失敗：" + err.message;
-                }
+            div.addEventListener("click", () => {
+                // 使用 Worker 回傳的 JSON 中 fallback details
+                document.getElementById("details").innerText = node.details || "點擊節點查看詳細資訊...";
             });
 
             mapContainer.appendChild(div);
