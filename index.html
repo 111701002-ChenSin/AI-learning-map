@@ -280,6 +280,9 @@
         // ========== 工具函數：呼叫 Cloudflare Worker ==========
         async function callAPI(systemPrompt, userPrompt) {
             try {
+                console.log('🚀 開始呼叫 API...');
+                console.log('Worker URL:', WORKER_URL);
+                
                 const response = await fetch(WORKER_URL, {
                     method: 'POST',
                     headers: {
@@ -291,15 +294,25 @@
                     })
                 });
 
+                console.log('📡 API 回應狀態:', response.status, response.statusText);
+
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorText = await response.text();
+                    console.error('❌ API 錯誤回應:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
                 }
 
                 const data = await response.json();
+                console.log('✅ API 回應資料:', data);
+                
+                if (!data.content) {
+                    throw new Error('API 回應中沒有 content 欄位');
+                }
+                
                 return data.content;
             } catch (error) {
-                console.error('API 呼叫失敗:', error);
-                return `⚠️ API 呼叫失敗：${error.message}`;
+                console.error('❌ API 呼叫失敗:', error);
+                throw error; // 拋出錯誤讓上層處理
             }
         }
 
@@ -317,6 +330,20 @@
                 alert('請輸入學習主題！');
                 return;
             }
+            
+            // 檢查 Worker URL 是否已設定
+            if (WORKER_URL === 'YOUR_CLOUDFLARE_WORKER_URL') {
+                document.getElementById('introContent').innerHTML = `
+                    <p style="color: red;">❌ 錯誤：尚未設定 Cloudflare Worker URL</p>
+                    <p style="color: #666; font-size: 14px;">
+                        請在程式碼第 227 行修改 <code>WORKER_URL</code> 變數<br>
+                        替換成你的 Worker URL，例如：<br>
+                        <code>https://ai-learning-map-api.你的帳號.workers.dev</code>
+                    </p>
+                `;
+                document.getElementById('introBox').classList.remove('hidden');
+                return;
+            }
 
             // 顯示載入
             showLoading('introContent');
@@ -327,9 +354,14 @@
             document.getElementById('conceptRadioGroup').innerHTML = '<div class="empty-state">_請先查看節點詳細內容_</div>';
             document.getElementById('deepBox').className = 'empty-state';
             document.getElementById('deepBox').textContent = '_請先選擇概念_';
+            
+            // 禁用按鈕
+            document.getElementById('btnQueryNode').disabled = true;
+            document.getElementById('btnQueryConcept').disabled = true;
 
             const systemPrompt = `你是一個學習路線規劃 AI。請用台灣習慣的中文回應。
-你必須輸出合法的 JSON 格式,包含主題簡介和學習地圖節點。`;
+你必須輸出合法的 JSON 格式,包含主題簡介和學習地圖節點。
+務必確保 JSON 格式完整且正確。`;
 
             const userPrompt = `請針對主題「${topic}」輸出 JSON。
 格式如下：
@@ -354,11 +386,14 @@
   ]
 }
 
-請務必包含初階、中階、進階各至少 2-3 個節點,並輸出合法 JSON。`;
-
-            const response = await callAPI(systemPrompt, userPrompt);
+請務必包含初階、中階、進階各至少 2-3 個節點,並輸出完整合法的 JSON，不要有任何其他文字。`;
 
             try {
+                console.log('📝 開始生成學習地圖...');
+                const response = await callAPI(systemPrompt, userPrompt);
+                console.log('📥 收到 API 回應（長度）:', response.length);
+                console.log('📥 API 回應內容:', response);
+
                 // 清理回應內容
                 let cleanedResponse = response.trim();
                 
@@ -370,17 +405,24 @@
                 const end = cleanedResponse.lastIndexOf('}') + 1;
                 
                 if (start === -1 || end === 0) {
-                    throw new Error('找不到 JSON 格式的內容');
+                    throw new Error('找不到 JSON 格式的內容。API 可能回傳了錯誤訊息。');
                 }
                 
                 const jsonStr = cleanedResponse.substring(start, end);
-                console.log('提取的 JSON:', jsonStr); // 除錯用
+                console.log('🔍 提取的 JSON:', jsonStr);
                 
                 const data = JSON.parse(jsonStr);
+                console.log('✅ JSON 解析成功:', data);
 
                 // 驗證資料結構
-                if (!data.intro || !data.map || !Array.isArray(data.map)) {
-                    throw new Error('JSON 格式不正確');
+                if (!data.intro) {
+                    throw new Error('JSON 中缺少 intro 欄位');
+                }
+                if (!data.map || !Array.isArray(data.map)) {
+                    throw new Error('JSON 中缺少 map 陣列或格式不正確');
+                }
+                if (data.map.length === 0) {
+                    throw new Error('學習地圖是空的');
                 }
 
                 // 顯示介紹
@@ -389,15 +431,57 @@
                 // 顯示節點列表
                 currentMapData = data.map;
                 renderNodeRadios(data.map);
+                
+                console.log('🎉 學習地圖生成完成！');
 
             } catch (error) {
-                console.error('完整錯誤:', error);
-                console.error('API 回應:', response);
-                document.getElementById('introContent').innerHTML = `
-                    <p style="color: red;">⚠️ 解析失敗：${error.message}</p>
-                    <p style="font-size: 12px; color: #666;">請檢查瀏覽器 Console 查看詳細錯誤訊息</p>
-                `;
-                document.getElementById('nodeRadioGroup').innerHTML = '<div class="empty-state">生成失敗，請重試</div>';
+                console.error('❌ 完整錯誤:', error);
+                
+                let errorHTML = `<p style="color: red;">⚠️ 生成失敗：${error.message}</p>`;
+                
+                // 根據錯誤類型提供不同的建議
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorHTML += `
+                        <p style="color: #666; font-size: 14px; margin-top: 10px;">
+                            <strong>可能原因：</strong><br>
+                            1. Worker URL 設定錯誤<br>
+                            2. Worker 尚未部署或已停用<br>
+                            3. 網路連線問題<br><br>
+                            <strong>解決方法：</strong><br>
+                            - 確認 Worker URL 正確<br>
+                            - 檢查 Cloudflare Worker 是否正常運作<br>
+                            - 開啟瀏覽器 Console (F12) 查看詳細錯誤
+                        </p>
+                    `;
+                } else if (error.message.includes('HTTP 401') || error.message.includes('HTTP 403')) {
+                    errorHTML += `
+                        <p style="color: #666; font-size: 14px; margin-top: 10px;">
+                            <strong>可能原因：</strong>API Key 未設定或無效<br><br>
+                            <strong>解決方法：</strong><br>
+                            - 到 Cloudflare Worker 設定環境變數<br>
+                            - 確認 GROQ_API_KEY 正確無誤
+                        </p>
+                    `;
+                } else if (error.message.includes('Unexpected end of JSON')) {
+                    errorHTML += `
+                        <p style="color: #666; font-size: 14px; margin-top: 10px;">
+                            <strong>可能原因：</strong>API 回應的 JSON 不完整<br><br>
+                            <strong>解決方法：</strong><br>
+                            - 檢查 Worker 中的 max_tokens 設定<br>
+                            - 確認 API 回應格式正確<br>
+                            - 開啟 Console (F12) 查看 API 原始回應
+                        </p>
+                    `;
+                } else {
+                    errorHTML += `
+                        <p style="color: #666; font-size: 14px; margin-top: 10px;">
+                            請按 F12 開啟瀏覽器 Console 查看詳細錯誤訊息
+                        </p>
+                    `;
+                }
+                
+                document.getElementById('introContent').innerHTML = errorHTML;
+                document.getElementById('nodeRadioGroup').innerHTML = '<div class="empty-state">生成失敗，請檢查錯誤訊息後重試</div>';
             }
         }
 
