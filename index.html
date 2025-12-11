@@ -359,11 +359,29 @@
             const response = await callAPI(systemPrompt, userPrompt);
 
             try {
+                // 清理回應內容
+                let cleanedResponse = response.trim();
+                
+                // 移除可能的 Markdown 標記
+                cleanedResponse = cleanedResponse.replace(/```json/g, '').replace(/```/g, '');
+                
                 // 提取 JSON
-                const start = response.indexOf('{');
-                const end = response.lastIndexOf('}') + 1;
-                const jsonStr = response.substring(start, end);
+                const start = cleanedResponse.indexOf('{');
+                const end = cleanedResponse.lastIndexOf('}') + 1;
+                
+                if (start === -1 || end === 0) {
+                    throw new Error('找不到 JSON 格式的內容');
+                }
+                
+                const jsonStr = cleanedResponse.substring(start, end);
+                console.log('提取的 JSON:', jsonStr); // 除錯用
+                
                 const data = JSON.parse(jsonStr);
+
+                // 驗證資料結構
+                if (!data.intro || !data.map || !Array.isArray(data.map)) {
+                    throw new Error('JSON 格式不正確');
+                }
 
                 // 顯示介紹
                 document.getElementById('introContent').innerHTML = `<h3>📘 ${topic}</h3><p>${data.intro}</p>`;
@@ -373,7 +391,12 @@
                 renderNodeRadios(data.map);
 
             } catch (error) {
-                document.getElementById('introContent').innerHTML = `<p style="color: red;">⚠️ 解析失敗：${error.message}</p>`;
+                console.error('完整錯誤:', error);
+                console.error('API 回應:', response);
+                document.getElementById('introContent').innerHTML = `
+                    <p style="color: red;">⚠️ 解析失敗：${error.message}</p>
+                    <p style="font-size: 12px; color: #666;">請檢查瀏覽器 Console 查看詳細錯誤訊息</p>
+                `;
                 document.getElementById('nodeRadioGroup').innerHTML = '<div class="empty-state">生成失敗，請重試</div>';
             }
         }
