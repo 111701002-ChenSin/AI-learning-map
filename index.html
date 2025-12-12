@@ -292,10 +292,11 @@
         let qualityCheckResult = null; // 儲存品質檢查結果
 
         // ========== 工具函數：呼叫 Cloudflare Worker ==========
-        async function callAPI(systemPrompt, userPrompt) {
+        async function callAPI(systemPrompt, userPrompt, useModel = 'default') {
             try {
                 console.log('🚀 開始呼叫 API...');
                 console.log('Worker URL:', WORKER_URL);
+                console.log('使用模型:', useModel);
                 
                 const response = await fetch(WORKER_URL, {
                     method: 'POST',
@@ -304,7 +305,8 @@
                     },
                     body: JSON.stringify({
                         system: systemPrompt,
-                        prompt: userPrompt
+                        prompt: userPrompt,
+                        model: useModel // 傳遞模型參數
                     })
                 });
 
@@ -449,10 +451,11 @@
                 
                 console.log('🎉 學習地圖生成完成！');
                 
-                // 自動啟動品質檢查
+                // 自動啟動品質檢查（延遲 1 秒讓使用者看到地圖）
                 setTimeout(() => {
+                    console.log('⏰ 準備啟動品質檢查...');
                     checkMapQuality(topic, data);
-                }, 500);
+                }, 1000);
 
             } catch (error) {
                 console.error('❌ 完整錯誤:', error);
@@ -700,7 +703,9 @@
 
         // ========== 4. AI 品質檢查機器人 ==========
         async function checkMapQuality(topic, data) {
-            console.log('🤖 啟動品質檢查機器人...');
+            console.log('🤖 ===== 啟動品質檢查機器人 =====');
+            console.log('📝 主題:', topic);
+            console.log('📊 節點數量:', data.map.length);
             
             // 顯示檢查區域
             const checkBox = document.getElementById('qualityCheckBox');
@@ -708,80 +713,116 @@
             const fixBtn = document.getElementById('btnAutoFix');
             
             checkBox.style.display = 'block';
-            checkContent.innerHTML = '⏳ AI 品質檢查中，請稍候...';
+            checkContent.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="spinner"></div><br>⏳ AI 品質檢查中，請稍候...</div>';
             fixBtn.style.display = 'none';
+            
+            console.log('✅ 品質檢查區域已顯示');
 
-            const systemPrompt = `你是一位嚴謹的學習路徑品質檢查專家。請用台灣習慣的中文回應。
-你的任務是評估學習地圖的品質，找出可能的問題。
-請務必輸出合法的 JSON 格式。`;
+            const systemPrompt = `你是一位嚴謹的學習路徑品質檢查專家。
+你的任務是評估學習地圖的品質，給予客觀評分並提供改進建議。
+你必須只輸出 JSON 格式，不要有任何其他文字。`;
 
-            const userPrompt = `請評估以下學習地圖的品質：
+            // 統計各階段節點數
+            const levelCount = {
+                '初階': data.map.filter(n => n.level === '初階').length,
+                '中階': data.map.filter(n => n.level === '中階').length,
+                '進階': data.map.filter(n => n.level === '進階').length
+            };
+            
+            console.log('📈 階段分布:', levelCount);
+
+            const userPrompt = `請評估以下學習地圖的品質並給予評分：
 
 主題：${topic}
 簡介：${data.intro}
 
-學習節點：
+節點分布：
+- 初階：${levelCount['初階']} 個
+- 中階：${levelCount['中階']} 個  
+- 進階：${levelCount['進階']} 個
+
+學習節點列表：
 ${data.map.map((node, i) => `${i+1}. 【${node.level}】${node.title} - ${node.summary}`).join('\n')}
 
-請檢查以下項目：
-1. 初階/中階/進階的數量是否均衡（各階段至少要有2個節點）
-2. 節點順序是否合理（是否符合學習順序）
-3. 節點內容是否有重複
-4. 節點標題是否清晰明確
-5. 節點摘要是否簡潔有用
-6. 整體學習路徑是否完整且循序漸進
+評估標準：
+1. 各階段節點數量是否均衡（理想：各 2-3 個）
+2. 節點順序是否符合學習邏輯
+3. 是否有重複或相似的內容
+4. 節點標題是否清晰具體
+5. 摘要是否簡潔有用
+6. 整體路徑是否完整
 
-請以 JSON 格式回應，不要有其他文字：
+請以 JSON 格式回應（只輸出 JSON，不要其他內容）：
 {
-  "score": 85,
+  "score": 75,
   "hasIssues": true,
-  "issues": [
-    "初階節點太少，建議增加基礎概念",
-    "缺少實作練習相關節點"
-  ],
-  "suggestions": [
-    "在初階增加：基本語法",
-    "在中階增加：實戰項目"
-  ],
+  "issues": ["問題1", "問題2"],
+  "suggestions": ["建議1", "建議2"],
   "needsFix": true
 }
 
-score: 0-100分的評分
-hasIssues: 是否有問題（true/false）
-issues: 發現的問題列表（陣列）
-suggestions: 改進建議列表（陣列）
-needsFix: 是否需要修正（true/false）
+評分標準：
+- 90-100分：優秀
+- 70-89分：良好  
+- 50-69分：尚可，建議改進
+- 0-49分：需要修正
 
-重要：只輸出 JSON，不要有任何其他文字或說明。`;
+只輸出 JSON，不要有任何說明或格式標記。`;
 
             try {
-                const response = await callAPI(systemPrompt, userPrompt);
+                console.log('📤 發送品質檢查請求...');
+                
+                // 使用快速的 8B 模型進行品質檢查
+                const response = await callAPI(systemPrompt, userPrompt, 'quality-check');
+                
                 console.log('📥 品質檢查原始回應:', response);
                 
                 // 清理並解析 JSON
                 let cleaned = response.trim();
                 cleaned = cleaned.replace(/```json/g, '').replace(/```/g, '');
+                cleaned = cleaned.replace(/```/g, '');
+                
                 const start = cleaned.indexOf('{');
                 const end = cleaned.lastIndexOf('}') + 1;
                 
                 if (start === -1 || end === 0) {
-                    throw new Error('無法找到 JSON 格式');
+                    throw new Error('回應中找不到 JSON 格式');
                 }
                 
                 const jsonStr = cleaned.substring(start, end);
                 console.log('🔍 提取的 JSON:', jsonStr);
                 
                 qualityCheckResult = JSON.parse(jsonStr);
-                console.log('✅ 品質檢查完成:', qualityCheckResult);
+                console.log('✅ JSON 解析成功:', qualityCheckResult);
+                
+                // 確保資料格式正確
+                if (typeof qualityCheckResult.score !== 'number') {
+                    qualityCheckResult.score = 70; // 預設值
+                }
+                if (!Array.isArray(qualityCheckResult.issues)) {
+                    qualityCheckResult.issues = [];
+                }
+                if (!Array.isArray(qualityCheckResult.suggestions)) {
+                    qualityCheckResult.suggestions = [];
+                }
+                if (typeof qualityCheckResult.needsFix !== 'boolean') {
+                    qualityCheckResult.needsFix = qualityCheckResult.score < 80;
+                }
+                
+                console.log('📊 品質檢查結果:', qualityCheckResult);
                 
                 // 顯示檢查結果
                 displayQualityCheck(qualityCheckResult);
 
             } catch (error) {
                 console.error('❌ 品質檢查失敗:', error);
+                console.error('錯誤堆疊:', error.stack);
                 checkContent.innerHTML = `
-                    ⚠️ 品質檢查失敗：${error.message}<br>
-                    <span style="font-size: 12px;">學習地圖已生成，你仍可繼續使用</span>
+                    <div style="background: #f8d7da; padding: 15px; border-radius: 8px;">
+                        <strong style="color: #721c24;">⚠️ 品質檢查失敗</strong>
+                        <p style="margin-top: 10px; color: #721c24;">錯誤：${error.message}</p>
+                        <p style="margin-top: 5px; font-size: 12px; color: #721c24;">學習地圖已生成，你仍可繼續使用</p>
+                    </div>
                 `;
             }
         }
@@ -894,7 +935,10 @@ ${qualityCheckResult.suggestions.join('\n')}
 5. 只輸出 JSON，不要有其他內容`;
 
             try {
-                const response = await callAPI(systemPrompt, userPrompt);
+                console.log('📤 發送自動修正請求...');
+                
+                // 使用強大的 70B 模型進行修正
+                const response = await callAPI(systemPrompt, userPrompt, 'auto-fix');
                 
                 // 清理並解析 JSON
                 let cleaned = response.trim();
