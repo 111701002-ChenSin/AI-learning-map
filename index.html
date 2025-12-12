@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #A7EBF2 0%, #54ACBF 50%, #26658C 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -21,22 +21,24 @@
         .container {
             max-width: 1000px;
             margin: 0 auto;
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
             padding: 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(1, 28, 64, 0.3);
         }
 
         h1 {
-            color: #667eea;
+            color: #023859;
             text-align: center;
             margin-bottom: 10px;
             font-size: 2.5em;
+            font-weight: 300;
+            letter-spacing: 2px;
         }
 
         .subtitle {
             text-align: center;
-            color: #666;
+            color: #26658C;
             margin-bottom: 30px;
             line-height: 1.6;
         }
@@ -44,15 +46,16 @@
         .section {
             margin-bottom: 30px;
             padding: 20px;
-            background: #f8f9fa;
+            background: rgba(167, 235, 242, 0.1);
             border-radius: 12px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #54ACBF;
         }
 
         .section h2 {
-            color: #667eea;
+            color: #023859;
             margin-bottom: 15px;
             font-size: 1.4em;
+            font-weight: 400;
         }
 
         .input-group {
@@ -77,7 +80,7 @@
 
         button {
             padding: 15px 30px;
-            background: #667eea;
+            background: #54ACBF;
             color: white;
             border: none;
             border-radius: 10px;
@@ -88,9 +91,9 @@
         }
 
         button:hover {
-            background: #5568d3;
+            background: #26658C;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(38, 101, 140, 0.4);
         }
 
         button:disabled {
@@ -189,7 +192,7 @@
         }
 
         .concept-tag {
-            background: #667eea;
+            background: #54ACBF;
             color: white;
             padding: 2px 6px;
             border-radius: 4px;
@@ -199,7 +202,7 @@
         hr {
             margin: 30px 0;
             border: none;
-            border-top: 2px dashed #e0e0e0;
+            border-top: 2px solid rgba(167, 235, 242, 0.5);
         }
 
         .empty-state {
@@ -212,28 +215,28 @@
 </head>
 <body>
     <div class="container">
-        <h1>🤖 AI 學習地圖生成器</h1>
-        <p class="subtitle">📖 <strong>流程：</strong>輸入主題 → 選擇想學習的節點 → 查看詳細內容 → 選擇想深入的概念</p>
+        <h1>AI 學習地圖生成器</h1>
+        <p class="subtitle">輸入主題 → 選擇想學習的節點 → 查看詳細內容 → 選擇想深入的概念</p>
 
         <!-- 步驟 0: 輸入主題 -->
         <div class="section">
-            <h2>🎯 學習主題</h2>
+            <h2>學習主題</h2>
             <div class="input-group">
                 <input type="text" id="topicInput" placeholder="例如：R、Python、資料分析、機器學習">
-                <button id="btnGenerate" onclick="generateMap()">🚀 生成學習地圖</button>
+                <button id="btnGenerate" onclick="generateMap()">生成學習地圖</button>
             </div>
             <div id="introBox" class="hidden">
-                <h3>📘 主題介紹</h3>
+                <h3>主題介紹</h3>
                 <div id="introContent" class="intro-box"></div>
             </div>
             
             <!-- AI 品質檢查區 -->
             <div id="qualityCheckBox" style="margin-top: 20px; display: none;">
-                <div style="background: #fff3cd; padding: 20px; border-radius: 10px; border-left: 4px solid #ffc107; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    <h3 style="color: #856404; margin-bottom: 15px; font-size: 18px;">🤖 AI 品質檢查機器人</h3>
-                    <div id="qualityCheckContent" style="color: #856404; line-height: 1.8; font-size: 15px;"></div>
-                    <button id="btnAutoFix" onclick="autoFixMap()" style="margin-top: 15px; padding: 12px 24px; background: #ff9800; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; display: none;">
-                        🔧 自動修正學習地圖
+                <div style="background: rgba(167, 235, 242, 0.2); padding: 20px; border-radius: 10px; border-left: 4px solid #54ACBF; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                    <h3 style="color: #023859; margin-bottom: 15px; font-size: 18px; font-weight: 400;">實用性檢查</h3>
+                    <div id="qualityCheckContent" style="color: #26658C; line-height: 1.8; font-size: 15px;"></div>
+                    <button id="btnAutoFix" onclick="autoFixMap()" style="margin-top: 15px; padding: 12px 24px; background: #26658C; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; display: none;">
+                        重新優化學習地圖
                     </button>
                 </div>
             </div>
@@ -243,38 +246,38 @@
 
         <!-- 步驟 1: 選擇節點 -->
         <div class="section">
-            <h2>📋 步驟 1：選擇想學習的節點</h2>
+            <h2>步驟 1：選擇想學習的節點</h2>
             <div id="nodeRadioGroup" class="radio-group">
-                <div class="empty-state">_生成學習地圖後會顯示節點列表_</div>
+                <div class="empty-state">生成學習地圖後會顯示節點列表</div>
             </div>
-            <button id="btnQueryNode" onclick="queryNodeDetails()" disabled>📖 查看此節點的詳細內容</button>
+            <button id="btnQueryNode" onclick="queryNodeDetails()" disabled>查看此節點的詳細內容</button>
         </div>
 
         <hr>
 
         <!-- 步驟 2: 節點詳細內容 -->
         <div class="section">
-            <h2>📚 步驟 2：學習內容詳情</h2>
-            <div id="detailBox" class="empty-state">_選擇節點後點擊「查看詳細內容」_</div>
+            <h2>步驟 2：學習內容詳情</h2>
+            <div id="detailBox" class="empty-state">選擇節點後點擊「查看詳細內容」</div>
         </div>
 
         <hr>
 
         <!-- 步驟 3: 選擇核心概念 -->
         <div class="section">
-            <h2>🔍 步驟 3：深入學習核心概念</h2>
+            <h2>步驟 3：深入學習核心概念</h2>
             <div id="conceptRadioGroup" class="radio-group">
-                <div class="empty-state">_查看節點詳細內容後會顯示核心概念_</div>
+                <div class="empty-state">查看節點詳細內容後會顯示核心概念</div>
             </div>
-            <button id="btnQueryConcept" onclick="queryConceptDetails()" disabled>🔬 深入學習此概念</button>
+            <button id="btnQueryConcept" onclick="queryConceptDetails()" disabled>深入學習此概念</button>
         </div>
 
         <hr>
 
         <!-- 步驟 4: 概念詳細說明 -->
         <div class="section">
-            <h2>💡 深入學習內容</h2>
-            <div id="deepBox" class="empty-state">_選擇概念後點擊「深入學習」_</div>
+            <h2>深入學習內容</h2>
+            <div id="deepBox" class="empty-state">選擇概念後點擊「深入學習」</div>
         </div>
     </div>
 
@@ -731,43 +734,43 @@
             
             console.log('📈 階段分布:', levelCount);
 
-            const userPrompt = `請評估以下學習地圖的品質並給予評分：
+            const userPrompt = `請評估以下學習地圖的品質，重點檢查內容正確性和合理性：
 
 主題：${topic}
 簡介：${data.intro}
 
-節點分布：
-- 初階：${levelCount['初階']} 個
-- 中階：${levelCount['中階']} 個  
-- 進階：${levelCount['進階']} 個
-
 學習節點列表：
 ${data.map.map((node, i) => `${i+1}. 【${node.level}】${node.title} - ${node.summary}`).join('\n')}
 
-評估標準：
-1. 各階段節點數量是否均衡（理想：各 2-3 個）
-2. 節點順序是否符合學習邏輯
-3. 是否有重複或相似的內容
-4. 節點標題是否清晰具體
-5. 摘要是否簡潔有用
-6. 整體路徑是否完整
+評估重點（請嚴格檢查）：
+1. 節點內容是否符合該主題（有沒有不相關或錯誤的內容）
+2. 節點分類是否正確（初階/中階/進階的難度是否合理）
+3. 學習順序是否符合邏輯（基礎概念是否在進階概念之前）
+4. 節點標題和摘要是否準確、清晰
+5. 是否有重要的核心概念被遺漏
+6. 是否有明顯的錯誤或不適當的內容
 
-請以 JSON 格式回應（只輸出 JSON，不要其他內容）：
+請以 JSON 格式回應（只輸出 JSON）：
 {
-  "score": 75,
-  "hasIssues": true,
-  "issues": ["問題1", "問題2"],
-  "suggestions": ["建議1", "建議2"],
-  "needsFix": true
+  "hasIssues": false,
+  "criticalIssues": [],
+  "minorIssues": [],
+  "suggestions": [],
+  "needsFix": false
 }
 
-評分標準：
-- 90-100分：優秀
-- 70-89分：良好  
-- 50-69分：尚可，建議改進
-- 0-49分：需要修正
+說明：
+- hasIssues: 是否發現問題（true/false）
+- criticalIssues: 嚴重問題（如內容錯誤、分類不當、順序混亂）- 陣列
+- minorIssues: 次要問題（如可以改進的地方）- 陣列
+- suggestions: 具體改進建議 - 陣列
+- needsFix: 是否需要修正（只有 criticalIssues 不為空時才為 true）
 
-只輸出 JSON，不要有任何說明或格式標記。`;
+重要：
+- 不要因為節點數量少就認為有問題（6-9個節點是合理的）
+- 只關注內容的正確性和合理性
+- 如果沒有明顯問題，criticalIssues 和 minorIssues 應該是空陣列
+- 只輸出 JSON，不要其他內容`;
 
             try {
                 console.log('📤 發送品質檢查請求...');
@@ -796,17 +799,23 @@ ${data.map.map((node, i) => `${i+1}. 【${node.level}】${node.title} - ${node.s
                 console.log('✅ JSON 解析成功:', qualityCheckResult);
                 
                 // 確保資料格式正確
-                if (typeof qualityCheckResult.score !== 'number') {
-                    qualityCheckResult.score = 70; // 預設值
+                if (!Array.isArray(qualityCheckResult.difficultyIssues)) {
+                    qualityCheckResult.difficultyIssues = [];
                 }
-                if (!Array.isArray(qualityCheckResult.issues)) {
-                    qualityCheckResult.issues = [];
+                if (!Array.isArray(qualityCheckResult.orderIssues)) {
+                    qualityCheckResult.orderIssues = [];
+                }
+                if (!Array.isArray(qualityCheckResult.contentIssues)) {
+                    qualityCheckResult.contentIssues = [];
                 }
                 if (!Array.isArray(qualityCheckResult.suggestions)) {
                     qualityCheckResult.suggestions = [];
                 }
                 if (typeof qualityCheckResult.needsFix !== 'boolean') {
-                    qualityCheckResult.needsFix = qualityCheckResult.score < 80;
+                    const totalIssues = qualityCheckResult.difficultyIssues.length + 
+                                       qualityCheckResult.orderIssues.length + 
+                                       qualityCheckResult.contentIssues.length;
+                    qualityCheckResult.needsFix = totalIssues > 0;
                 }
                 
                 console.log('📊 品質檢查結果:', qualityCheckResult);
@@ -833,51 +842,69 @@ ${data.map.map((node, i) => `${i+1}. 【${node.level}】${node.title} - ${node.s
             const fixBtn = document.getElementById('btnAutoFix');
             
             let html = '';
+            const hasAnyIssues = (result.difficultyIssues && result.difficultyIssues.length > 0) ||
+                                (result.orderIssues && result.orderIssues.length > 0) ||
+                                (result.contentIssues && result.contentIssues.length > 0);
             
-            // 評分
-            const scoreColor = result.score >= 80 ? '#28a745' : result.score >= 60 ? '#ffc107' : '#dc3545';
-            html += `<div style="font-size: 28px; font-weight: bold; color: ${scoreColor}; margin-bottom: 15px;">
-                評分：${result.score} 分
-            </div>`;
-            
-            // 問題列表
-            if (result.hasIssues && result.issues && result.issues.length > 0) {
-                html += '<div style="margin-top: 15px; background: white; padding: 15px; border-radius: 8px;">';
-                html += '<strong style="font-size: 16px;">🔍 發現的問題：</strong>';
-                html += '<ul style="margin: 10px 0 0 20px; line-height: 1.8;">';
-                result.issues.forEach(issue => {
+            // 難度分類問題
+            if (result.difficultyIssues && result.difficultyIssues.length > 0) {
+                html += '<div style="background: rgba(255, 193, 7, 0.1); padding: 15px; border-radius: 8px; border-left: 3px solid #ffc107; margin-bottom: 15px;">';
+                html += '<strong style="font-size: 15px; color: #856404;">難度分類問題</strong>';
+                html += '<ul style="margin: 10px 0 0 20px; line-height: 1.8; color: #856404;">';
+                result.difficultyIssues.forEach(issue => {
                     html += `<li style="margin: 5px 0;">${issue}</li>`;
                 });
                 html += '</ul></div>';
-            } else {
-                html += '<div style="margin-top: 15px; background: #d4edda; padding: 15px; border-radius: 8px; color: #155724;">';
-                html += '✅ 未發現明顯問題';
-                html += '</div>';
             }
             
-            // 建議
+            // 順序問題
+            if (result.orderIssues && result.orderIssues.length > 0) {
+                html += '<div style="background: rgba(255, 152, 0, 0.1); padding: 15px; border-radius: 8px; border-left: 3px solid #ff9800; margin-bottom: 15px;">';
+                html += '<strong style="font-size: 15px; color: #e65100;">學習順序問題</strong>';
+                html += '<ul style="margin: 10px 0 0 20px; line-height: 1.8; color: #e65100;">';
+                result.orderIssues.forEach(issue => {
+                    html += `<li style="margin: 5px 0;">${issue}</li>`;
+                });
+                html += '</ul></div>';
+            }
+            
+            // 內容問題
+            if (result.contentIssues && result.contentIssues.length > 0) {
+                html += '<div style="background: rgba(244, 67, 54, 0.1); padding: 15px; border-radius: 8px; border-left: 3px solid #f44336; margin-bottom: 15px;">';
+                html += '<strong style="font-size: 15px; color: #c62828;">內容完整性問題</strong>';
+                html += '<ul style="margin: 10px 0 0 20px; line-height: 1.8; color: #c62828;">';
+                result.contentIssues.forEach(issue => {
+                    html += `<li style="margin: 5px 0;">${issue}</li>`;
+                });
+                html += '</ul></div>';
+            }
+            
+            // 改進建議
             if (result.suggestions && result.suggestions.length > 0) {
-                html += '<div style="margin-top: 15px; background: white; padding: 15px; border-radius: 8px;">';
-                html += '<strong style="font-size: 16px;">💡 改進建議：</strong>';
-                html += '<ul style="margin: 10px 0 0 20px; line-height: 1.8;">';
+                html += '<div style="background: rgba(84, 172, 191, 0.1); padding: 15px; border-radius: 8px; border-left: 3px solid #54ACBF; margin-bottom: 15px;">';
+                html += '<strong style="font-size: 15px; color: #023859;">改進建議</strong>';
+                html += '<ul style="margin: 10px 0 0 20px; line-height: 1.8; color: #26658C;">';
                 result.suggestions.forEach(suggestion => {
                     html += `<li style="margin: 5px 0;">${suggestion}</li>`;
                 });
                 html += '</ul></div>';
             }
             
-            // 結論
-            if (result.needsFix) {
-                html += '<div style="margin-top: 15px; padding: 15px; background: #fff; border-radius: 8px; border: 2px solid #ff9800;">';
-                html += '<strong style="color: #e65100; font-size: 16px;">⚠️ 建議使用自動修正功能來改善學習地圖品質</strong>';
+            // 結論和按鈕
+            if (hasAnyIssues) {
+                html += '<div style="padding: 15px; background: rgba(38, 101, 140, 0.1); border-radius: 8px; border: 2px solid #26658C;">';
+                html += '<strong style="color: #023859; font-size: 15px;">建議優化</strong>';
+                html += '<p style="margin-top: 8px; color: #26658C;">發現了一些可能影響學習效果的問題，建議使用優化功能改善學習地圖</p>';
                 html += '</div>';
-                fixBtn.style.display = 'block'; // 顯示修正按鈕
-                console.log('🔧 顯示自動修正按鈕');
+                fixBtn.style.display = 'block';
+                console.log('顯示優化按鈕');
             } else {
-                html += '<div style="margin-top: 15px; padding: 15px; background: #d4edda; border-radius: 8px; border: 2px solid #28a745;">';
-                html += '<strong style="color: #155724; font-size: 16px;">✅ 學習地圖品質良好，可以直接使用！</strong>';
+                html += '<div style="padding: 15px; background: rgba(76, 175, 80, 0.1); border-radius: 8px; border: 2px solid #4CAF50;">';
+                html += '<strong style="color: #2e7d32; font-size: 15px;">學習地圖品質良好</strong>';
+                html += '<p style="margin-top: 8px; color: #388e3c;">未發現明顯問題，學習者可以按照這個地圖順利學習</p>';
                 html += '</div>';
-                fixBtn.style.display = 'none'; // 隱藏修正按鈕
+                fixBtn.style.display = 'none';
+                console.log('隱藏優化按鈕');
             }
             
             checkContent.innerHTML = html;
@@ -908,13 +935,30 @@ ${data.map.map((node, i) => `${i+1}. 【${node.level}】${node.title} - ${node.s
 
             const userPrompt = `請針對主題「${currentTopic}」重新生成學習地圖。
 
-之前的學習地圖存在以下問題：
-${qualityCheckResult.issues.join('\n')}
+實用性檢查發現以下問題：
+
+難度分類問題：
+${qualityCheckResult.difficultyIssues && qualityCheckResult.difficultyIssues.length > 0 ? qualityCheckResult.difficultyIssues.join('\n') : '無'}
+
+學習順序問題：
+${qualityCheckResult.orderIssues && qualityCheckResult.orderIssues.length > 0 ? qualityCheckResult.orderIssues.join('\n') : '無'}
+
+內容完整性問題：
+${qualityCheckResult.contentIssues && qualityCheckResult.contentIssues.length > 0 ? qualityCheckResult.contentIssues.join('\n') : '無'}
 
 改進建議：
 ${qualityCheckResult.suggestions.join('\n')}
 
-請根據這些建議，生成一個改進後的學習地圖，輸出 JSON 格式：
+請根據這些問題和建議，重新生成一個優化後的學習地圖。
+
+優化重點：
+1. 確保難度分類正確（初階=初學者能理解，進階=需要先備知識）
+2. 確保學習順序合理（先備知識在前，應用在後）
+3. 補充遺漏的核心概念
+4. 移除過時或不重要的內容
+5. 節點數量保持在 6-9 個即可
+
+請輸出 JSON 格式：
 {
   "intro": "主題簡介（100字內）",
   "map": [
@@ -927,12 +971,7 @@ ${qualityCheckResult.suggestions.join('\n')}
   ]
 }
 
-重要要求：
-1. 確保初階、中階、進階各至少有 2-3 個節點
-2. 節點順序要符合學習邏輯
-3. 避免內容重複
-4. 標題要清晰明確
-5. 只輸出 JSON，不要有其他內容`;
+只輸出 JSON，不要有其他內容。`;
 
             try {
                 console.log('📤 發送自動修正請求...');
