@@ -226,6 +226,17 @@
                 <h3>📘 主題介紹</h3>
                 <div id="introContent" class="intro-box"></div>
             </div>
+            
+            <!-- AI 品質檢查區 -->
+            <div id="qualityCheckBox" style="margin-top: 20px; display: none;">
+                <div style="background: #fff3cd; padding: 20px; border-radius: 10px; border-left: 4px solid #ffc107; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <h3 style="color: #856404; margin-bottom: 15px; font-size: 18px;">🤖 AI 品質檢查機器人</h3>
+                    <div id="qualityCheckContent" style="color: #856404; line-height: 1.8; font-size: 15px;"></div>
+                    <button id="btnAutoFix" onclick="autoFixMap()" style="margin-top: 15px; padding: 12px 24px; background: #ff9800; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; display: none;">
+                        🔧 自動修正學習地圖
+                    </button>
+                </div>
+            </div>
         </div>
 
         <hr>
@@ -277,6 +288,8 @@
         let currentNodeTitle = '';
         let currentNodeLevel = '';
         let currentNodeSummary = '';
+        let currentTopic = ''; // 儲存當前主題
+        let qualityCheckResult = null; // 儲存品質檢查結果
 
         // ========== 工具函數：呼叫 Cloudflare Worker ==========
         async function callAPI(systemPrompt, userPrompt) {
@@ -431,9 +444,15 @@
 
                 // 顯示節點列表
                 currentMapData = data.map;
+                currentTopic = topic;
                 renderNodeRadios(data.map);
                 
                 console.log('🎉 學習地圖生成完成！');
+                
+                // 自動啟動品質檢查
+                setTimeout(() => {
+                    checkMapQuality(topic, data);
+                }, 500);
 
             } catch (error) {
                 console.error('❌ 完整錯誤:', error);
@@ -678,6 +697,250 @@
                 generateMap();
             }
         });
+
+        // ========== 4. AI 品質檢查機器人 ==========
+        async function checkMapQuality(topic, data) {
+            console.log('🤖 啟動品質檢查機器人...');
+            
+            // 顯示檢查區域
+            const checkBox = document.getElementById('qualityCheckBox');
+            const checkContent = document.getElementById('qualityCheckContent');
+            const fixBtn = document.getElementById('btnAutoFix');
+            
+            checkBox.style.display = 'block';
+            checkContent.innerHTML = '⏳ AI 品質檢查中，請稍候...';
+            fixBtn.style.display = 'none';
+
+            const systemPrompt = `你是一位嚴謹的學習路徑品質檢查專家。請用台灣習慣的中文回應。
+你的任務是評估學習地圖的品質，找出可能的問題。
+請務必輸出合法的 JSON 格式。`;
+
+            const userPrompt = `請評估以下學習地圖的品質：
+
+主題：${topic}
+簡介：${data.intro}
+
+學習節點：
+${data.map.map((node, i) => `${i+1}. 【${node.level}】${node.title} - ${node.summary}`).join('\n')}
+
+請檢查以下項目：
+1. 初階/中階/進階的數量是否均衡（各階段至少要有2個節點）
+2. 節點順序是否合理（是否符合學習順序）
+3. 節點內容是否有重複
+4. 節點標題是否清晰明確
+5. 節點摘要是否簡潔有用
+6. 整體學習路徑是否完整且循序漸進
+
+請以 JSON 格式回應，不要有其他文字：
+{
+  "score": 85,
+  "hasIssues": true,
+  "issues": [
+    "初階節點太少，建議增加基礎概念",
+    "缺少實作練習相關節點"
+  ],
+  "suggestions": [
+    "在初階增加：基本語法",
+    "在中階增加：實戰項目"
+  ],
+  "needsFix": true
+}
+
+score: 0-100分的評分
+hasIssues: 是否有問題（true/false）
+issues: 發現的問題列表（陣列）
+suggestions: 改進建議列表（陣列）
+needsFix: 是否需要修正（true/false）
+
+重要：只輸出 JSON，不要有任何其他文字或說明。`;
+
+            try {
+                const response = await callAPI(systemPrompt, userPrompt);
+                console.log('📥 品質檢查原始回應:', response);
+                
+                // 清理並解析 JSON
+                let cleaned = response.trim();
+                cleaned = cleaned.replace(/```json/g, '').replace(/```/g, '');
+                const start = cleaned.indexOf('{');
+                const end = cleaned.lastIndexOf('}') + 1;
+                
+                if (start === -1 || end === 0) {
+                    throw new Error('無法找到 JSON 格式');
+                }
+                
+                const jsonStr = cleaned.substring(start, end);
+                console.log('🔍 提取的 JSON:', jsonStr);
+                
+                qualityCheckResult = JSON.parse(jsonStr);
+                console.log('✅ 品質檢查完成:', qualityCheckResult);
+                
+                // 顯示檢查結果
+                displayQualityCheck(qualityCheckResult);
+
+            } catch (error) {
+                console.error('❌ 品質檢查失敗:', error);
+                checkContent.innerHTML = `
+                    ⚠️ 品質檢查失敗：${error.message}<br>
+                    <span style="font-size: 12px;">學習地圖已生成，你仍可繼續使用</span>
+                `;
+            }
+        }
+
+        // ========== 顯示品質檢查結果 ==========
+        function displayQualityCheck(result) {
+            const checkContent = document.getElementById('qualityCheckContent');
+            const fixBtn = document.getElementById('btnAutoFix');
+            
+            let html = '';
+            
+            // 評分
+            const scoreColor = result.score >= 80 ? '#28a745' : result.score >= 60 ? '#ffc107' : '#dc3545';
+            html += `<div style="font-size: 28px; font-weight: bold; color: ${scoreColor}; margin-bottom: 15px;">
+                評分：${result.score} 分
+            </div>`;
+            
+            // 問題列表
+            if (result.hasIssues && result.issues && result.issues.length > 0) {
+                html += '<div style="margin-top: 15px; background: white; padding: 15px; border-radius: 8px;">';
+                html += '<strong style="font-size: 16px;">🔍 發現的問題：</strong>';
+                html += '<ul style="margin: 10px 0 0 20px; line-height: 1.8;">';
+                result.issues.forEach(issue => {
+                    html += `<li style="margin: 5px 0;">${issue}</li>`;
+                });
+                html += '</ul></div>';
+            } else {
+                html += '<div style="margin-top: 15px; background: #d4edda; padding: 15px; border-radius: 8px; color: #155724;">';
+                html += '✅ 未發現明顯問題';
+                html += '</div>';
+            }
+            
+            // 建議
+            if (result.suggestions && result.suggestions.length > 0) {
+                html += '<div style="margin-top: 15px; background: white; padding: 15px; border-radius: 8px;">';
+                html += '<strong style="font-size: 16px;">💡 改進建議：</strong>';
+                html += '<ul style="margin: 10px 0 0 20px; line-height: 1.8;">';
+                result.suggestions.forEach(suggestion => {
+                    html += `<li style="margin: 5px 0;">${suggestion}</li>`;
+                });
+                html += '</ul></div>';
+            }
+            
+            // 結論
+            if (result.needsFix) {
+                html += '<div style="margin-top: 15px; padding: 15px; background: #fff; border-radius: 8px; border: 2px solid #ff9800;">';
+                html += '<strong style="color: #e65100; font-size: 16px;">⚠️ 建議使用自動修正功能來改善學習地圖品質</strong>';
+                html += '</div>';
+                fixBtn.style.display = 'block'; // 顯示修正按鈕
+                console.log('🔧 顯示自動修正按鈕');
+            } else {
+                html += '<div style="margin-top: 15px; padding: 15px; background: #d4edda; border-radius: 8px; border: 2px solid #28a745;">';
+                html += '<strong style="color: #155724; font-size: 16px;">✅ 學習地圖品質良好，可以直接使用！</strong>';
+                html += '</div>';
+                fixBtn.style.display = 'none'; // 隱藏修正按鈕
+            }
+            
+            checkContent.innerHTML = html;
+        }
+
+        // ========== 5. 自動修正學習地圖 ==========
+        async function autoFixMap() {
+            if (!qualityCheckResult || !currentTopic) {
+                alert('請先生成學習地圖！');
+                return;
+            }
+
+            console.log('🔧 開始自動修正...');
+            
+            // 顯示修正中
+            const checkContent = document.getElementById('qualityCheckContent');
+            const fixBtn = document.getElementById('btnAutoFix');
+            
+            checkContent.innerHTML = '⏳ AI 正在修正學習地圖，請稍候...<br><span style="font-size: 14px;">這可能需要 10-20 秒</span>';
+            fixBtn.style.display = 'none';
+            
+            showLoading('introContent');
+            document.getElementById('nodeRadioGroup').innerHTML = '<div class="loading"><div class="spinner"></div>重新生成中...</div>';
+
+            const systemPrompt = `你是一個學習路線規劃專家。請用台灣習慣的中文回應。
+你必須根據品質檢查的建議，重新生成一個更好的學習地圖。
+你必須只輸出合法的 JSON 格式,不要有任何其他文字。`;
+
+            const userPrompt = `請針對主題「${currentTopic}」重新生成學習地圖。
+
+之前的學習地圖存在以下問題：
+${qualityCheckResult.issues.join('\n')}
+
+改進建議：
+${qualityCheckResult.suggestions.join('\n')}
+
+請根據這些建議，生成一個改進後的學習地圖，輸出 JSON 格式：
+{
+  "intro": "主題簡介（100字內）",
+  "map": [
+    {"title": "技能1", "level": "初階", "summary": "摘要"},
+    {"title": "技能2", "level": "初階", "summary": "摘要"},
+    {"title": "技能3", "level": "中階", "summary": "摘要"},
+    {"title": "技能4", "level": "中階", "summary": "摘要"},
+    {"title": "技能5", "level": "進階", "summary": "摘要"},
+    {"title": "技能6", "level": "進階", "summary": "摘要"}
+  ]
+}
+
+重要要求：
+1. 確保初階、中階、進階各至少有 2-3 個節點
+2. 節點順序要符合學習邏輯
+3. 避免內容重複
+4. 標題要清晰明確
+5. 只輸出 JSON，不要有其他內容`;
+
+            try {
+                const response = await callAPI(systemPrompt, userPrompt);
+                
+                // 清理並解析 JSON
+                let cleaned = response.trim();
+                cleaned = cleaned.replace(/```json/g, '').replace(/```/g, '');
+                const start = cleaned.indexOf('{');
+                const end = cleaned.lastIndexOf('}') + 1;
+                const jsonStr = cleaned.substring(start, end);
+                
+                const newData = JSON.parse(jsonStr);
+                console.log('✅ 修正後的學習地圖:', newData);
+
+                // 更新顯示
+                document.getElementById('introContent').innerHTML = `<h3>📘 ${currentTopic}</h3><p>${newData.intro}</p>`;
+                currentMapData = newData.map;
+                renderNodeRadios(newData.map);
+                
+                // 顯示成功訊息
+                const checkBox = document.getElementById('qualityCheckBox');
+                checkContent.innerHTML = `
+                    <div style="background: #d4edda; padding: 15px; border-radius: 8px; border: 2px solid #28a745;">
+                        <strong style="color: #155724; font-size: 16px;">✅ 學習地圖已自動修正完成！</strong>
+                        <p style="margin-top: 10px; color: #155724;">正在重新進行品質檢查...</p>
+                    </div>
+                `;
+                
+                // 重新檢查品質
+                setTimeout(() => {
+                    checkMapQuality(currentTopic, newData);
+                }, 1000);
+                
+                console.log('🎉 學習地圖修正完成！');
+
+            } catch (error) {
+                console.error('❌ 自動修正失敗:', error);
+                checkContent.innerHTML = `
+                    <div style="background: #f8d7da; padding: 15px; border-radius: 8px; border: 2px solid #dc3545;">
+                        <strong style="color: #721c24;">⚠️ 自動修正失敗：${error.message}</strong>
+                        <p style="margin-top: 10px; color: #721c24;">請使用原始學習地圖或重新生成</p>
+                    </div>
+                `;
+                fixBtn.style.display = 'block';
+                
+                // 恢復原始地圖顯示
+                renderNodeRadios(currentMapData);
+            }
+        }
     </script>
 </body>
 </html>
