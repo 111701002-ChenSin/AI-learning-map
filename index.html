@@ -158,8 +158,8 @@
             margin: 20px 0 10px 0;
         }
 
-        .detail-box p {
-            margin: 10px 0;
+        .detail-box strong {
+            color: #764ba2;
         }
 
         .loading {
@@ -269,8 +269,7 @@
 
     <script>
         // ========== 配置 ==========
-        // 👇 請替換成你的 Cloudflare Worker URL
-        const WORKER_URL = 'https://billowing-sun-7ead.111701002.workers.dev';
+        const WORKER_URL = 'https://billowing-sun-7ead.111701002.workers.dev'; // 替換成你的 Worker URL
         
         // ========== 全域狀態 ==========
         let currentMapData = [];
@@ -545,7 +544,7 @@
 學習階段：${node.level}
 簡介：${node.summary}
 
-請提供以下內容，使用純文字格式，不要有任何 Markdown 符號（如 ** 或 *）：
+請提供以下內容：
 
 📚 核心概念
 列出 3-5 個關鍵概念,每個概念用【概念名稱】標記,例如：【向量】、【資料框】、【函數】
@@ -562,7 +561,7 @@
 ⏱️ 預估時間
 大約需要多久
 
-重要：回覆請使用純文字，不要使用任何 Markdown 格式符號（**、*、#等），並確保核心概念部分的每個重要概念都用【】標記。`;
+請確保核心概念部分的每個重要概念都用【】標記,方便學習者點擊深入學習。`;
 
             const response = await callAPI(systemPrompt, userPrompt);
 
@@ -646,7 +645,7 @@
             const userPrompt = `上層主題：${currentNodeTitle}
 子概念：${concept}
 
-請提供以下內容，使用純文字格式，不要有任何 Markdown 符號（如 ** 或 *）：
+請提供：
 
 🔍 定義
 這個概念是什麼
@@ -663,7 +662,7 @@
 ⚠️ 常見錯誤
 初學者容易犯的錯誤
 
-重要：回覆請使用純文字，不要使用任何 Markdown 格式符號（**、*、#等）。請用淺顯易懂的方式說明,並提供具體範例。`;
+請用淺顯易懂的方式說明,並提供具體範例。`;
 
             const response = await callAPI(systemPrompt, userPrompt);
 
