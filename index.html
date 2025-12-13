@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
-            background: linear-gradient(135deg, #A7EBF2 0%, #54ACBF 50%, #26658C 100%);
+            background: linear-gradient(135deg, #54ACBF 0%, #011C40 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -32,7 +32,7 @@
             text-align: center;
             margin-bottom: 10px;
             font-size: 2.5em;
-            font-weight: 300;
+            font-weight: bold;
             letter-spacing: 2px;
         }
 
@@ -41,6 +41,7 @@
             color: #26658C;
             margin-bottom: 30px;
             line-height: 1.6;
+            font-weight: bold;
         }
 
         .section {
@@ -55,7 +56,7 @@
             color: #023859;
             margin-bottom: 15px;
             font-size: 1.4em;
-            font-weight: 400;
+            font-weight: bold;
         }
 
         .input-group {
@@ -233,7 +234,7 @@
             <!-- AI 品質檢查區 -->
             <div id="qualityCheckBox" style="margin-top: 20px; display: none;">
                 <div style="background: rgba(167, 235, 242, 0.2); padding: 20px; border-radius: 10px; border-left: 4px solid #54ACBF; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                    <h3 style="color: #023859; margin-bottom: 15px; font-size: 18px; font-weight: 400;">實用性檢查</h3>
+                    <h3 style="color: #023859; margin-bottom: 15px; font-size: 18px; font-weight: bold;">實用性檢查</h3>
                     <div id="qualityCheckContent" style="color: #26658C; line-height: 1.8; font-size: 15px;"></div>
                     <button id="btnAutoFix" onclick="autoFixMap()" style="margin-top: 15px; padding: 12px 24px; background: #26658C; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; display: none;">
                         重新優化學習地圖
