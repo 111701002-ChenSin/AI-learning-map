@@ -847,8 +847,11 @@ ${data.map.map((node, i) => `${i+1}. 【${node.level}】${node.title} - ${node.s
                                 (result.orderIssues && result.orderIssues.length > 0) ||
                                 (result.contentIssues && result.contentIssues.length > 0);
             
+            let criticalIssuesCount = 0; // 需要修正的問題數量
+            
             // 難度分類問題
             if (result.difficultyIssues && result.difficultyIssues.length > 0) {
+                criticalIssuesCount += result.difficultyIssues.length;
                 html += '<div style="background: rgba(255, 193, 7, 0.1); padding: 15px; border-radius: 8px; border-left: 3px solid #ffc107; margin-bottom: 15px;">';
                 html += '<strong style="font-size: 15px; color: #856404;">難度分類問題</strong>';
                 html += '<ul style="margin: 10px 0 0 20px; line-height: 1.8; color: #856404;">';
@@ -858,8 +861,9 @@ ${data.map.map((node, i) => `${i+1}. 【${node.level}】${node.title} - ${node.s
                 html += '</ul></div>';
             }
             
-            // 順序問題
+            // 順序問題（這類問題需要修正）
             if (result.orderIssues && result.orderIssues.length > 0) {
+                criticalIssuesCount += result.orderIssues.length;
                 html += '<div style="background: rgba(255, 152, 0, 0.1); padding: 15px; border-radius: 8px; border-left: 3px solid #ff9800; margin-bottom: 15px;">';
                 html += '<strong style="font-size: 15px; color: #e65100;">學習順序問題</strong>';
                 html += '<ul style="margin: 10px 0 0 20px; line-height: 1.8; color: #e65100;">';
@@ -869,8 +873,9 @@ ${data.map.map((node, i) => `${i+1}. 【${node.level}】${node.title} - ${node.s
                 html += '</ul></div>';
             }
             
-            // 內容問題
+            // 內容問題（這類問題需要修正）
             if (result.contentIssues && result.contentIssues.length > 0) {
+                criticalIssuesCount += result.contentIssues.length;
                 html += '<div style="background: rgba(244, 67, 54, 0.1); padding: 15px; border-radius: 8px; border-left: 3px solid #f44336; margin-bottom: 15px;">';
                 html += '<strong style="font-size: 15px; color: #c62828;">內容完整性問題</strong>';
                 html += '<ul style="margin: 10px 0 0 20px; line-height: 1.8; color: #c62828;">';
@@ -880,7 +885,7 @@ ${data.map.map((node, i) => `${i+1}. 【${node.level}】${node.title} - ${node.s
                 html += '</ul></div>';
             }
             
-            // 改進建議
+            // 改進建議（這類建議不一定需要修正）
             if (result.suggestions && result.suggestions.length > 0) {
                 html += '<div style="background: rgba(84, 172, 191, 0.1); padding: 15px; border-radius: 8px; border-left: 3px solid #54ACBF; margin-bottom: 15px;">';
                 html += '<strong style="font-size: 15px; color: #023859;">改進建議</strong>';
@@ -892,20 +897,31 @@ ${data.map.map((node, i) => `${i+1}. 【${node.level}】${node.title} - ${node.s
             }
             
             // 結論和按鈕
-            if (hasAnyIssues) {
+            if (criticalIssuesCount > 0) {
+                // 有需要修正的問題（難度、順序、內容）
                 html += '<div style="padding: 15px; background: rgba(38, 101, 140, 0.1); border-radius: 8px; border: 2px solid #26658C;">';
-                html += '<strong style="color: #023859; font-size: 15px;">建議優化</strong>';
-                html += '<p style="margin-top: 8px; color: #26658C;">發現了一些可能影響學習效果的問題，建議使用優化功能改善學習地圖</p>';
+                html += '<strong style="color: #023859; font-size: 15px;">發現需要修正的問題</strong>';
+                html += '<p style="margin-top: 8px; color: #26658C;">建議修正這些問題以確保學習效果</p>';
                 html += '</div>';
                 fixBtn.style.display = 'block';
-                console.log('顯示優化按鈕');
+                fixBtn.textContent = '修正問題並重新生成';
+                console.log('顯示修正按鈕（有關鍵問題）');
+            } else if (result.suggestions && result.suggestions.length > 0) {
+                // 只有建議，沒有關鍵問題
+                html += '<div style="padding: 15px; background: rgba(76, 175, 80, 0.1); border-radius: 8px; border: 2px solid #4CAF50;">';
+                html += '<strong style="color: #2e7d32; font-size: 15px;">學習地圖品質良好</strong>';
+                html += '<p style="margin-top: 8px; color: #388e3c;">沒有需要立即修正的問題。上述建議可以幫助進一步完善，但不是必須的。</p>';
+                html += '</div>';
+                fixBtn.style.display = 'none';
+                console.log('隱藏修正按鈕（只有建議）');
             } else {
+                // 完全沒問題
                 html += '<div style="padding: 15px; background: rgba(76, 175, 80, 0.1); border-radius: 8px; border: 2px solid #4CAF50;">';
                 html += '<strong style="color: #2e7d32; font-size: 15px;">學習地圖品質良好</strong>';
                 html += '<p style="margin-top: 8px; color: #388e3c;">未發現明顯問題，學習者可以按照這個地圖順利學習</p>';
                 html += '</div>';
                 fixBtn.style.display = 'none';
-                console.log('隱藏優化按鈕');
+                console.log('隱藏修正按鈕（完美）');
             }
             
             checkContent.innerHTML = html;
